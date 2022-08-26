@@ -55,6 +55,7 @@ RUN mkdir -p /app/public \
  && chown -R apache:apache /app \
  && chmod -R 755 /app \
  && chmod +x /entrypoint.sh
-
+COPY html/public/ /app/public/
+COPY dump/ /docker-entrypoint-initdb.d/
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
