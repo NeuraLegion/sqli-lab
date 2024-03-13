@@ -47,8 +47,8 @@ RUN mkdir -p /run/apache2 \
  && sed -i "s/#LoadModule\ deflate_module/LoadModule\ deflate_module/" /etc/apache2/httpd.conf \
  && sed -i "s#^DocumentRoot \".*#DocumentRoot \"/app/public\"#g" /etc/apache2/httpd.conf \
  && sed -i "s#/var/www/localhost/htdocs#/app/public#" /etc/apache2/httpd.conf \
- && sed -i "s|ErrorLog /dev/stderr|ErrorLog logs/error.log|" /etc/apache2/httpd.conf \
- && sed -i "s|CustomLog /dev/stdout combined|CustomLog logs/access.log combined|" /etc/apache2/httpd.conf \
+ && sed -i "s|ErrorLog logs/error.log|ErrorLog /dev/stderr|" /etc/apache2/httpd.conf \
+ && sed -i "s|CustomLog logs/access.log combined|CustomLog /dev/stdout combined|" /etc/apache2/httpd.conf \
  && printf "\n<Directory \"/app/public\">\n\tAllowOverride All\n</Directory>\n" >> /etc/apache2/httpd.conf
 
 ADD ["entrypoint.sh", "/"]
