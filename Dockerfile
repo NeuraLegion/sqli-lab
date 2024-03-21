@@ -49,7 +49,9 @@ RUN mkdir -p /run/apache2 \
  && sed -i "s#/var/www/localhost/htdocs#/app/public#" /etc/apache2/httpd.conf \
  && sed -i "s|ErrorLog logs/error.log|ErrorLog /dev/stderr|" /etc/apache2/httpd.conf \
  && sed -i "s|CustomLog logs/access.log combined|CustomLog /dev/stdout combined|" /etc/apache2/httpd.conf \
- && printf "\n<Directory \"/app/public\">\n\tAllowOverride All\n</Directory>\n" >> /etc/apache2/httpd.conf
+ && printf "\n<Directory \"/app/public\">\n\tAllowOverride All\n</Directory>\n" >> /etc/apache2/httpd.conf \ 
+ && sed -i "s#KeepAliveTimeout 5#KeepAliveTimeout 600#" /etc/apache2/conf.d/default.conf \
+ && sed -i "s#MaxKeepAliveRequests 100#MaxKeepAliveRequests 2000#" /etc/apache2/conf.d/default.conf 
 
 ADD ["entrypoint.sh", "/"]
 
