@@ -33,10 +33,8 @@ RUN apk add --update --no-cache \
     php5-curl \
     php5-ctype \
     php5-exif \
-    php5-zlib
-
-# Install composer
-#RUN curl -sS https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
+    php5-zlib \
+    mysql-client
 
 # Add apache to run and configure
 RUN mkdir -p /run/apache2 \
@@ -49,17 +47,19 @@ RUN mkdir -p /run/apache2 \
  && sed -i "s#/var/www/localhost/htdocs#/app/public#" /etc/apache2/httpd.conf \
  && sed -i "s|ErrorLog logs/error.log|ErrorLog /dev/stderr|" /etc/apache2/httpd.conf \
  && sed -i "s|CustomLog logs/access.log combined|CustomLog /dev/stdout combined|" /etc/apache2/httpd.conf \
- && printf "\n<Directory \"/app/public\">\n\tAllowOverride All\n</Directory>\n" >> /etc/apache2/httpd.conf \ 
+ && printf "\n<Directory \"/app/public\">\n\tAllowOverride All\n</Directory>\n" >> /etc/apache2/httpd.conf \
  && sed -i "s#KeepAliveTimeout 5#KeepAliveTimeout 600#" /etc/apache2/conf.d/default.conf \
- && sed -i "s#MaxKeepAliveRequests 100#MaxKeepAliveRequests 2000#" /etc/apache2/conf.d/default.conf 
+ && sed -i "s#MaxKeepAliveRequests 100#MaxKeepAliveRequests 2000#" /etc/apache2/conf.d/default.conf
 
-ADD ["entrypoint.sh", "/"]
-
-RUN mkdir -p /app/public \
- && chown -R apache:apache /app \
- && chmod -R 755 /app \
- && chmod +x /entrypoint.sh
+# Copy application source and SQL init scripts into the image
 COPY html/public/ /app/public/
 COPY dump/ /docker-entrypoint-initdb.d/
+
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chown -R apache:apache /app \
+ && chmod -R 755 /app \
+ && chmod +x /entrypoint.sh
+
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
