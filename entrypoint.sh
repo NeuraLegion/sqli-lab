@@ -43,35 +43,33 @@ if [ -n "$DB_HOST" ]; then
     RETRY=0
     until mysql -h "$DB_HOST" -u "${DB_USER:-root}" -p"${DB_PASS}" -e "SELECT 1" > /dev/null 2>&1; do
         RETRY=$((RETRY + 1))
-        if [ "$RETRY" -ge 5 ]; then
-            echo "ERROR: MariaDB not reachable after $RETRY attempts. Continuing without DB init."
-            break
+        if [ "$RETRY" -ge 60 ]; then
+            echo "ERROR: MariaDB not reachable after $RETRY attempts. Failing container start."
+            exit 1
         fi
-        echo "  Waiting for MariaDB (attempt $RETRY/5)..."
-        sleep 2
+        echo "  Waiting for MariaDB (attempt $RETRY/60)..."
+        sleep 3
     done
 
-    if [ "$RETRY" -lt 5 ]; then
-        echo "MariaDB is ready. Running database initialization scripts..."
+    echo "MariaDB is ready. Running database initialization scripts..."
 
-        # Run the main application SQL (creates 'security' DB with tables and data)
-        if [ -f /app/public/sql-lab.sql ]; then
-            mysql -h "$DB_HOST" -u "${DB_USER:-root}" -p"${DB_PASS}" < /app/public/sql-lab.sql \
-                && echo "  -> sql-lab.sql applied." \
-                || echo "  -> sql-lab.sql failed (may already exist)."
-        fi
-
-        # Run any scripts placed in /docker-entrypoint-initdb.d/
-        for f in /docker-entrypoint-initdb.d/*.sql; do
-            if [ -f "$f" ]; then
-                mysql -h "$DB_HOST" -u "${DB_USER:-root}" -p"${DB_PASS}" < "$f" \
-                    && echo "  -> $(basename $f) applied." \
-                    || echo "  -> $(basename $f) failed (may already exist)."
-            fi
-        done
-
-        echo "Database initialization complete."
+    # Run the main application SQL (creates 'security' DB with tables and data)
+    if [ -f /app/public/sql-lab.sql ]; then
+        mysql -h "$DB_HOST" -u "${DB_USER:-root}" -p"${DB_PASS}" < /app/public/sql-lab.sql \
+            && echo "  -> sql-lab.sql applied." \
+            || echo "  -> sql-lab.sql failed (may already exist)."
     fi
+
+    # Run any scripts placed in /docker-entrypoint-initdb.d/
+    for f in /docker-entrypoint-initdb.d/*.sql; do
+        if [ -f "$f" ]; then
+            mysql -h "$DB_HOST" -u "${DB_USER:-root}" -p"${DB_PASS}" < "$f" \
+                && echo "  -> $(basename $f) applied." \
+                || echo "  -> $(basename $f) failed (may already exist)."
+        fi
+    done
+
+    echo "Database initialization complete."
 fi
 
 # -------------------------------------------------------------------
